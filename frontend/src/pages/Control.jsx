@@ -1,33 +1,36 @@
-import { useAuth } from "../context/AuthContext";
+import { Sun, Moon, DoorOpen, Fan } from "lucide-react";
+
+const controls = [
+  { label: "Encender Luz Cuarto 1", color: "from-yellow-400 to-orange-600", icon: <Sun size={24} /> },
+  { label: "Apagar Luz Cuarto 1", color: "from-gray-400 to-gray-600", icon: <Moon size={24} /> },
+  { label: "Encender Luz Cuarto 2", color: "from-blue-400 to-purple-600", icon: <Sun size={24} /> },
+  { label: "Apagar Luz Cuarto 2", color: "from-gray-400 to-gray-600", icon: <Moon size={24} /> },
+  { label: "Encender Luz Cuarto 3", color: "from-red-400 to-pink-600", icon: <Sun size={24} /> },
+  { label: "Apagar Luz Cuarto 3", color: "from-gray-400 to-gray-600", icon: <Moon size={24} /> },
+  { label: "Cambiar Color de Luz", color: "from-purple-400 to-pink-400", icon: <Fan size={24} /> },
+  { label: "Abrir Portón", color: "from-blue-400 to-cyan-400", icon: <DoorOpen size={24} /> },
+];
 
 export default function Control() {
-  const { logout } = useAuth();
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Control</h1>
-        <button
-          onClick={logout}
-          className="bg-red-500 text-white px-4 py-2 rounded-xl"
-        >
-          Cerrar sesión
-        </button>
-      </div>
+    <div className="p-6 min-h-screen" style={{ backgroundColor: "#EEF5FF" }}>
+      <h1 className="text-3xl font-bold mb-6">Control</h1>
 
-      <div className="grid grid-cols-2 gap-4">
-        <button className="bg-green-500 text-white p-4 rounded-2xl shadow">
-          Encender Luz
-        </button>
-        <button className="bg-gray-500 text-white p-4 rounded-2xl shadow">
-          Apagar Luz
-        </button>
-        <button className="bg-blue-500 text-white p-4 rounded-2xl shadow">
-          Abrir Portón
-        </button>
-        <button className="bg-yellow-500 text-white p-4 rounded-2xl shadow">
-          Activar Ventilador
-        </button>
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {controls.map((control, index) => (
+          <button
+            key={index}
+            className={`
+              flex flex-col items-center justify-center gap-3 p-6 rounded-2xl 
+              bg-gradient-to-r ${control.color} 
+              text-white font-semibold shadow-lg 
+              transition transform hover:scale-105 hover:shadow-2xl
+            `}
+          >
+            {control.icon}
+            <span>{control.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
