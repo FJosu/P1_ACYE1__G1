@@ -1,6 +1,6 @@
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -28,22 +28,20 @@ export default function Graph_Mov() {
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow mt-6">
-      <h2 className="text-xl font-bold mb-3">🚶‍♂️ Detección de movimiento</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
+      <h2 className="text-xl font-bold mb-3">Grafica de Detección de movimiento</h2>
+      <ResponsiveContainer width="100%" height={150}>
+        <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="fecha" />
           <YAxis domain={[0, 1]} />
           <Tooltip />
           <Legend />
-          <Line
-            type="stepAfter"
+          <Bar
             dataKey="presencia"
-            stroke="#ff7300"
+            fill="#ff7300"
             name="Presencia (ON=1, OFF=0)"
-            dot
           />
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

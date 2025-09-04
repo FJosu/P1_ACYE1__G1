@@ -28,6 +28,19 @@ app.get("/api/alarmas", async (req, res) => {
   }
 });
 
+app.get("/api/entrada", async (req, res) => {
+  try {
+    await client.connect();
+    const database = client.db("Arqui1");
+    const movs = database.collection("Entrada");
+    const data = await movs.find().sort({ ts: 1 }).limit(50).toArray();
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error al obtener datos");
+  }
+});
+
 app.get("/api/cuartos", async (req, res) => {
   try {
     await client.connect();
@@ -59,6 +72,32 @@ app.get("/api/riego", async (req, res) => {
     await client.connect();
     const database = client.db("Arqui1");
     const movs = database.collection("Riego");
+    const data = await movs.find().sort({ ts: 1 }).limit(50).toArray();
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error al obtener datos");
+  }
+});
+
+app.get("/api/temperatura", async (req, res) => {
+  try {
+    await client.connect();
+    const database = client.db("Arqui1");
+    const movs = database.collection("Temperatura");
+    const data = await movs.find().sort({ ts: 1 }).limit(50).toArray();
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error al obtener datos");
+  }
+});
+
+app.get("/api/ventilacion", async (req, res) => {
+  try {
+    await client.connect();
+    const database = client.db("Arqui1");
+    const movs = database.collection("Ventilacion");
     const data = await movs.find().sort({ ts: 1 }).limit(50).toArray();
     res.json(data);
   } catch (err) {

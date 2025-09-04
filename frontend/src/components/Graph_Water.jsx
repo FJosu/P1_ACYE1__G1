@@ -1,6 +1,6 @@
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -31,22 +31,20 @@ export default function Graph_Water() {
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow mt-6">
-      <h2 className="text-xl font-bold mb-3">Estado de la Bomba de Agua</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
+      <h2 className="text-xl font-bold mb-3">Grafica de estado de riego</h2>
+      <ResponsiveContainer width="100%" height={150}>
+        <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="fecha" />
           <YAxis domain={[0, 1]} />
           <Tooltip />
           <Legend />
-          <Line
-            type="stepAfter"
+          <Bar
             dataKey="bomba"
-            stroke="#0077ff"
+            fill="#0077ff"
             name="Bomba (ON=1, OFF=0)"
-            dot
           />
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

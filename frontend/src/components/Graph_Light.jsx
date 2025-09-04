@@ -40,16 +40,16 @@ export default function Graph_Light() {
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow mt-6">
-      <h2 className="text-xl font-bold mb-3">Iluminacion y Cuartos</h2>
-      <ResponsiveContainer width="100%" height={350}>
+      <h2 className="text-xl font-bold mb-3">Grafica de Iluminación en Cuartos</h2>
+      <ResponsiveContainer width="100%" height={150}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="fecha" />
           <YAxis domain={[0, 1]} />
           <Tooltip />
           <Legend />
-          <Bar dataKey="room1" stackId="a" fill="#82ca9d" name="Room 1" />
-          <Bar dataKey="room2" stackId="a" fill="#8884d8" name="Room 2" />
+          <Bar dataKey="room1" fill="#82ca9d" name="Room 1" />
+          <Bar dataKey="room2" fill="#8884d8" name="Room 2" />
         </BarChart>
       </ResponsiveContainer>
     </div>
