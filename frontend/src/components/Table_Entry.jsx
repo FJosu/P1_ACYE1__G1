@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 export default function Table_Entry() {
   const [eventos, setEventos] = useState([]);
+  const [fechaFiltro, setFechaFiltro] = useState(""); // estado para filtro de fecha
 
   useEffect(() => {
     fetch("http://localhost:4000/api/entrada")
@@ -9,6 +10,7 @@ export default function Table_Entry() {
       .then((datos) => {
         const formateados = datos.map((d) => ({
           fecha: new Date(d.ts).toLocaleDateString(),
+          fechaISO: d.ts.split("T")[0], // formato YYYY-MM-DD para comparar
           hora: new Date(d.ts).toLocaleTimeString(),
           evento: d.evento,
           origen: d.origen,
@@ -18,9 +20,26 @@ export default function Table_Entry() {
       .catch((err) => console.error("Error cargando datos:", err));
   }, []);
 
+  // Filtrar si hay fecha seleccionada
+  const eventosFiltrados = fechaFiltro
+    ? eventos.filter((e) => e.fechaISO === fechaFiltro)
+    : eventos;
+
   return (
     <div className="bg-white p-4 rounded-2xl shadow mt-6">
       <h2 className="text-xl font-bold mb-3">Tabla de Eventos de la Entrada</h2>
+
+      {/* Filtro por fecha */}
+      <div className="mb-4">
+        <label className="mr-2 font-medium">Filtrar por fecha:</label>
+        <input
+          type="date"
+          value={fechaFiltro}
+          onChange={(e) => setFechaFiltro(e.target.value)}
+          className="border border-gray-300 rounded px-2 py-1"
+        />
+      </div>
+
       <table className="table-auto w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
@@ -31,7 +50,7 @@ export default function Table_Entry() {
           </tr>
         </thead>
         <tbody>
-          {eventos.map((e, i) => (
+          {eventosFiltrados.map((e, i) => (
             <tr key={i}>
               <td className="border border-gray-300 px-4 py-2">{e.fecha}</td>
               <td className="border border-gray-300 px-4 py-2">{e.hora}</td>

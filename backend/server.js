@@ -9,7 +9,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // ==================== MongoDB ====================
-const uri = "mongodb+srv://MariAbi:papasfritas14@cluster0.pij2euq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://Alejandro:y1zajqr9AWm4Gl5g@cluster0.pij2euq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri);
 
 // ==================== MQTT (HiveMQ Cloud) ====================
