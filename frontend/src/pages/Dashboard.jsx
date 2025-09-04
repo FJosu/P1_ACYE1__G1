@@ -13,11 +13,7 @@ import Table_Temperature from "../components/Table_Temperature";
 import Graph_Vent from "../components/Graph_Vent";
 import Table_Vent from "../components/Table_Vent";
 
-<<<<<<< HEAD
 function Section({ graph, table, reverse = false }) {
-=======
-function Section({ graph, title, description, reverse = false }) {
->>>>>>> 9dec64a6ac15d8ecfb781d4de1fa40aec60c5d3c
   return (
     <div
       className={`flex flex-col md:flex-row ${
@@ -27,16 +23,8 @@ function Section({ graph, title, description, reverse = false }) {
       {/* Gráfica */}
       <div className="flex-1">{graph}</div>
 
-<<<<<<< HEAD
       {/* Tablas */}
       <div className="flex-1">{table}</div>
-=======
-      {/* Descripción */}
-      <div className="flex-1">
-        <h2 className="text-xl font-semibold mb-2">{title}</h2>
-        <p className="text-gray-600">{description}</p>
-      </div>
->>>>>>> 9dec64a6ac15d8ecfb781d4de1fa40aec60c5d3c
     </div>
   );
 }
@@ -50,7 +38,6 @@ export default function Dashboard() {
         {/* Secciones intercaladas */}
         <Section
           graph={<Graph_Alarm />}
-<<<<<<< HEAD
           table={<Table_Alarm />}
         />
         <Section
@@ -60,20 +47,10 @@ export default function Dashboard() {
         <Section
           graph={<Graph_Light />}
           table={<Table_Light />}
-=======
-          title="Alarmas"
-          description="Visualiza las estadísticas de alarmas activadas en tiempo real."
-        />
-        <Section
-          graph={<Graph_Light />}
-          title="Luces"
-          description="Esta debe de ser una grafica de lineas."
->>>>>>> 9dec64a6ac15d8ecfb781d4de1fa40aec60c5d3c
           reverse
         />
         <Section
           graph={<Graph_Mov />}
-<<<<<<< HEAD
           table={<Table_Mov />}
         />
         <Section
@@ -89,21 +66,6 @@ export default function Dashboard() {
         <Section
           graph={<Graph_Vent />}
           table={<Table_Vent />}
-=======
-          title="Movimiento"
-          description="Esta grafica debe de ser de barras."
-        />
-        <Section
-          graph={<Graph_Water />}
-          title="Consumo de Agua"
-          description="Métricas de uso de agua en las instalaciones."
-          reverse
-        />
-        <Section
-          graph={<Graph_Water_Motives />}
-          title="Motivos de Consumo de Agua"
-          description="Esta tambien debe de ser una tabla que se para."
->>>>>>> 9dec64a6ac15d8ecfb781d4de1fa40aec60c5d3c
         />
 
         {/* Tablas */}
@@ -112,11 +74,6 @@ export default function Dashboard() {
           <p className="text-gray-600">Aquí se mostrarán las tablas de datos relevantes.</p>
         </div>
 
-        {/* Alertas en tiempo real */}
-        <div className="bg-white shadow rounded-2xl p-6">
-          <h2 className="text-xl font-semibold mb-2">🚨 Alertas en tiempo real</h2>
-          <p className="text-gray-600">Visualiza las alertas más recientes en vivo.</p>
-        </div>
       </div>
     </div>
   );
