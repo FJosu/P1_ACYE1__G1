@@ -1,6 +1,6 @@
 import time
 import ssl
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import RPi.GPIO as GPIO
 from gpiozero import DistanceSensor, Servo
 from RPLCD.i2c import CharLCD
@@ -20,11 +20,14 @@ LCD_ADDR = 0x27
 
 GPIO_Led1 = 5
 GPIO_Led2 = 6
+
 GPIO_Led3 = 13           
-GPIO_Bombadeagua = 10    
+GPIO_Ventilador = 10     
+GPIO_Bombadeagua = 20  
 
 GPIO_AlarmaR = 9         
-GPIO_AlarmaA = 11        
+GPIO_AlarmaA = 11
+GPIO_AlarmaV = 17     
 GPIO_AZUL = 18           
 GPIO_ROJO = 15           
 GPIO_VERDE = 14        
@@ -34,7 +37,7 @@ GPIO.setmode(GPIO.BCM)
 resolver = dns.resolver.Resolver(configure=False)
 resolver.timeout = 3
 resolver.lifetime = 5
-resolver.nameservers = ["8.8.8.8", "1.1.1.1"]  # Google + Cloudflare
+resolver.nameservers = ["8.8.8.8", "1.1.1.1"] 
 dns.resolver.default_resolver = resolver
 
 # === RGB por PWM ===
@@ -48,9 +51,13 @@ MQTT_USER = "Arqui1"
 MQTT_PASS = "Pass1234"
 CLIENT_ID  = "raspi-casainteligente-main"
 
+
 TOPIC_ILUM = "/ilumination"   
 TOPIC_ENTR = "/entrance"      
 TOPIC_ALERT= "/alerts"        
+TOPIC_VENT = "/ventilador" 
+TOPIC_BOMBA = "/bombaagua"   
+
 
 # ========== MongoDB (por categoría) ==========
 MONGO_URL = "mongodb+srv://Arqui1:pass123@cluster0.pij2euq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -70,8 +77,9 @@ col_alarm= db.get_collection("Alarmas")
 GPIO.setwarnings(False)
 GPIO.setup(GPIO_SOIL_DO, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) 
 GPIO.setmode(GPIO.BCM)
-for p in [GPIO_Led1, GPIO_Led2, GPIO_Led3, GPIO_Bombadeagua, GPIO_AlarmaR, GPIO_AlarmaA, GPIO_AZUL, GPIO_ROJO, GPIO_VERDE, GPIO_BUZZ]:
-    GPIO.setup(p, GPIO.OUT, initial=GPIO.LOW)
+for p in [GPIO_Led1, GPIO_Led2, GPIO_Led3, GPIO_Ventilador, GPIO_Bombadeagua, GPIO_AlarmaR, GPIO_AlarmaA, GPIO_AZUL, GPIO_ROJO, GPIO_VERDE, GPIO_BUZZ]:
+    if p != 26:  # No configurar GPIO26 (DHT11) como salida
+        GPIO.setup(p, GPIO.OUT, initial=GPIO.LOW)
 
 # Inicializar PWM después de configurar los pines como salida
 pwmR = GPIO.PWM(GPIO_ROJO,  RGB_FREQ)
@@ -89,7 +97,7 @@ BOMBA_ACTIVE_HIGH = True
 lcd = CharLCD('PCF8574', LCD_ADDR, cols=16, rows=2)
 ultra = DistanceSensor(echo=GPIO_ECHO, trigger=GPIO_TRIG, max_distance=4.0, threshold_distance=0.10)
 servo = Servo(GPIO_SERVO, min_pulse_width=0.0005, max_pulse_width=0.0025)
-dht = adafruit_dht.DHT11(board.D26)  # DHT en GPIO26 (board.D26)
+dht = adafruit_dht.DHT11(board.D12)  # DHT en GPIO26 (board.D26)
 
 # ========== Estado & Timers ==========
 t_last_lcd = 0.0
@@ -103,9 +111,14 @@ alarma_activa = False
 rgb_state = False
 
 # ========== Utilidades ==========
-def now_iso():
-    return datetime.now(timezone.utc).isoformat()
+#Zona horaria Guatemala 
+GUATEMALA_TZ = timezone(timedelta(hours=-6))
 
+def now_iso():
+    return datetime.now(GUATEMALA_TZ).isoformat()
+
+
+#Lcd
 def lcd2(l1="", l2=""):
     lcd.clear()
     lcd.write_string(l1[:16])
@@ -117,13 +130,14 @@ def buzzer(ms=120):
     time.sleep(ms/100.0)
     GPIO.output(GPIO_BUZZ, GPIO.LOW)
 
+
 def set_bomba(on: bool, motivo="auto"):
     GPIO.output(GPIO_Bombadeagua, GPIO.HIGH if on and BOMBA_ACTIVE_HIGH else GPIO.LOW)
     col_rieg.insert_one({"ts": now_iso(), "evento": "BOMBA_ON" if on else "BOMBA_OFF", "motivo": motivo})
-    lcd2("Riego:", "ON" if on else "OFF")
+
 
 def set_ventilador(on: bool, motivo="auto"):
-    GPIO.output(GPIO_Led3, GPIO.HIGH if on else GPIO.LOW)
+    GPIO.output(GPIO_Ventilador, GPIO.HIGH if on else GPIO.LOW)
     col_vent.insert_one({"ts": now_iso(), "evento": "VENT_ON" if on else "VENT_OFF", "motivo": motivo})
 
 def _to_duty(v255: int) -> float:
@@ -142,7 +156,8 @@ def set_rgb_off():
 
 def soil_seco():
     # DO habitual: HIGH=SECO, LOW=HÚMEDO
-    return GPIO.input(GPIO_SOIL_DO) == GPIO.HIGH
+    estado = GPIO.input(GPIO_SOIL_DO)
+    return estado == GPIO.HIGH
 
 def leer_dht():
     try:
@@ -167,10 +182,25 @@ def log_suelo_periodico():
     if time.time() - t_last_soil_log >= LOG_SOIL_EVERY:
         col_rieg.insert_one({"ts": now_iso(), "tipo": "suelo_lectura", "estado": "SECO" if soil_seco() else "HUMEDO"})
         t_last_soil_log = time.time()
-
+# Estado para control automático del ventilador
+ventilador_auto_on = False
+def logica_ventilador():
+    global ventilador_auto_on
+    t, h = leer_dht()
+    if t is None:
+        return
+    if t > 24.0:
+        if not ventilador_auto_on:
+            set_ventilador(True, "auto_temp")
+            col_vent.insert_one({"ts": now_iso(), "evento": "VENT_ON", "motivo": "auto_temp"})
+            ventilador_auto_on = True
+    else:
+        if ventilador_auto_on:
+            set_ventilador(False, "auto_temp")
+            col_vent.insert_one({"ts": now_iso(), "evento": "VENT_OFF", "motivo": "auto_temp"})
+            ventilador_auto_on = False
 # ========== Lógicas ==========
 def logica_riego():
-    # Con DO no hay %, interpretamos SECO = activar breve y cortar por seguridad
     if soil_seco():
         if GPIO.input(GPIO_Bombadeagua) == GPIO.LOW:
             set_bomba(True, "auto_suelo_seco")
@@ -213,19 +243,13 @@ def logica_alarma_temp(mqtt_client: mqtt.Client):
 
 
 def refrescar_lcd():
-    # Alterna entre 3 pantallas
-    static = getattr(refrescar_lcd, "_idx", 0)
-    if static == 0:
-        lcd2("Iluminacion:", "AUTO por US")
-    elif static == 1:
-        t, h = leer_dht()
-        if t is not None and h is not None:
-            lcd2(f"Temp:{t:>4.1f}C", f"Humed:{h:>4.1f}%")
-        else:
-            lcd2("DHT11", "Reintentando...")
+    # Siempre muestra temperatura y humedad
+    t, h = leer_dht()
+    if t is not None and h is not None:
+        lcd2(f"Temp:{t:>4.1f}C", f"Humed:{h:>4.1f}%")
+        print(f"Temp: {t:.1f}C, Humedad: {h:.1f}%")
     else:
-        lcd2("Suelo:", "SECO" if soil_seco() else "HUMEDO")
-    refrescar_lcd._idx = (static + 1) % 3
+        lcd2("DHT11", "Reintentando...")
 
 # ========== Ultrasonico → SOLO Iluminación ==========
 def luces_auto_on():
@@ -235,6 +259,8 @@ def luces_auto_on():
     GPIO.output(GPIO_Led3, GPIO.HIGH)
     col_ilum.insert_one({"ts": now_iso(), "room": "room1", "on": True, "origen": "ultrasonico"})
     col_ilum.insert_one({"ts": now_iso(), "room": "room2", "on": True, "origen": "ultrasonico"})
+    col_ilum.insert_one({"ts": now_iso(), "room": "room3", "on": True, "origen": "ultrasonico"})
+    
     col_mov.insert_one({"ts": now_iso(), "evento": "PRESENCIA_ON"})
 
 def luces_auto_off():
@@ -244,6 +270,7 @@ def luces_auto_off():
     GPIO.output(GPIO_Led3, GPIO.LOW)
     col_ilum.insert_one({"ts": now_iso(), "room": "room1", "on": False, "origen": "ultrasonico"})
     col_ilum.insert_one({"ts": now_iso(), "room": "room2", "on": False, "origen": "ultrasonico"})
+    col_ilum.insert_one({"ts": now_iso(), "room": "room3", "on": False, "origen": "ultrasonico"})
     col_mov.insert_one({"ts": now_iso(), "evento": "PRESENCIA_OFF"})
 
 ultra.when_in_range = luces_auto_on
@@ -256,7 +283,9 @@ def on_connect(client, userdata, flags, reason_code, properties):
     if code == 0:
         client.subscribe(TOPIC_ILUM)
         client.subscribe(TOPIC_ENTR)
-        print(f"[MQTT] Subscribed: {TOPIC_ILUM}, {TOPIC_ENTR}")
+        client.subscribe(TOPIC_VENT)
+        client.subscribe(TOPIC_BOMBA)
+        print(f"[MQTT] Subscribed: {TOPIC_ILUM}, {TOPIC_ENTR}, {TOPIC_VENT}, {TOPIC_BOMBA}")
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode().strip()
@@ -269,10 +298,42 @@ def on_message(client, userdata, msg):
             servo.max()
             col_entr.insert_one({"ts": now_iso(), "evento": "PORTON_OPEN", "origen": "mqtt"})
             lcd2("Porton:", "ABIERTO")
+            time.sleep(2)
+            refrescar_lcd()
         elif payload.lower() == "close":
             servo.min()
             col_entr.insert_one({"ts": now_iso(), "evento": "PORTON_CLOSE", "origen": "mqtt"})
             lcd2("Porton:", "CERRADO")
+            time.sleep(2)
+            refrescar_lcd()
+
+    # /ventilador → "on"/"off"
+    elif top == TOPIC_VENT:
+        if payload.lower() == "on":
+            set_ventilador(True, "mqtt")
+            lcd2("Ventilador:", "ENCENDIDO")
+            time.sleep(2)
+            refrescar_lcd()
+        elif payload.lower() == "off":
+            set_ventilador(False, "mqtt")
+            lcd2("Ventilador:", "APAGADO")
+            time.sleep(2)
+            refrescar_lcd()
+
+    # /bombaagua → "on"/"off"
+    elif top == TOPIC_BOMBA:
+        if payload.lower() == "on":
+            set_bomba(True, "mqtt")
+            col_rieg.insert_one({"ts": now_iso(), "evento": "BOMBA_ON", "origen": "mqtt"})
+            lcd2("Bomba Agua:", "ENCENDIDA")
+            time.sleep(2)
+            refrescar_lcd()
+        elif payload.lower() == "off":
+            set_bomba(False, "mqtt")
+            col_rieg.insert_one({"ts": now_iso(), "evento": "BOMBA_OFF", "origen": "mqtt"})
+            lcd2("Bomba Agua:", "APAGADA")
+            time.sleep(2)
+            refrescar_lcd()
 
     # /ilumination → room1 on/off | room2 on/off | rgb r,g,b
     elif top == TOPIC_ILUM:
@@ -282,16 +343,22 @@ def on_message(client, userdata, msg):
             on = "on" in pl
             GPIO.output(GPIO_Led1, GPIO.HIGH if on else GPIO.LOW)
             lcd2("Habitacion 1", "ENCENDIDA" if on else "APAGADA")
+            time.sleep(2)
+            refrescar_lcd()
             col_ilum.insert_one({**nowdoc, "room": "room1", "on": on})
         elif pl.startswith("room2"):
             on = "on" in pl
             GPIO.output(GPIO_Led2, GPIO.HIGH if on else GPIO.LOW)
             lcd2("Habitacion 2", "ENCENDIDA" if on else "APAGADA")
+            time.sleep(2)
+            refrescar_lcd()
             col_ilum.insert_one({**nowdoc, "room": "room2", "on": on})
         elif pl.startswith("room3"):
             on = "on" in pl
             GPIO.output(GPIO_Led3, GPIO.HIGH if on else GPIO.LOW)
             lcd2("Habitacion 3", "ENCENDIDA" if on else "APAGADA")
+            time.sleep(2)
+            refrescar_lcd()
             col_ilum.insert_one({**nowdoc, "room": "room3", "on": on})
         elif pl.startswith("rgb"):
             try:
@@ -300,6 +367,8 @@ def on_message(client, userdata, msg):
                 set_rgb_values(r, g, b)  # PWM 0..255 en cada canal
                 col_ilum.insert_one({**nowdoc, "rgb": [r, g, b]})
                 lcd2("RGB:", f"{r},{g},{b}")
+                time.sleep(2)
+                refrescar_lcd()
             except Exception as e:
                 print("RGB payload invalido:", e)
 
@@ -326,6 +395,7 @@ mqtt_client = build_mqtt_client()
 mqtt_client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
 mqtt_client.loop_start()
 
+
 try:
     while True:
         # Rotación LCD
@@ -336,12 +406,11 @@ try:
         # Lógicas
         logica_riego()
         logica_alarma_temp(mqtt_client)
+        logica_ventilador()
 
         # Logs periódicos
         log_temp_periodico()
         log_suelo_periodico()
-
-        time.sleep(0.2)
 
 except KeyboardInterrupt:
     pass
