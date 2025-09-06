@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 export default function Table_Mov() {
   const [eventos, setEventos] = useState([]);
-  const [fechaFiltro, setFechaFiltro] = useState(""); // estado para la fecha seleccionada
+  const [fechaFiltro, setFechaFiltro] = useState(""); 
 
   useEffect(() => {
     fetch("http://localhost:4000/api/movimiento")
@@ -10,7 +10,7 @@ export default function Table_Mov() {
       .then((datos) => {
         const formateados = datos.map((d) => ({
           fecha: new Date(d.ts).toLocaleDateString(),
-          fechaISO: d.ts.split("T")[0], // formato YYYY-MM-DD para filtrar
+          fechaISO: d.ts.split("T")[0],
           hora: new Date(d.ts).toLocaleTimeString(),
           evento: d.evento,
         }));
@@ -19,7 +19,6 @@ export default function Table_Mov() {
       .catch((err) => console.error("Error cargando datos:", err));
   }, []);
 
-  // Filtrar por fecha si se selecciona una
   const eventosFiltrados = fechaFiltro
     ? eventos.filter((e) => e.fechaISO === fechaFiltro)
     : eventos;

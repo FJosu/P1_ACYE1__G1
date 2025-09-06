@@ -36,14 +36,12 @@ export default function NavBar() {
             className="relative group flex justify-center p-2 hover:bg-blue-200 rounded"
           >
             {item.icon}
-            {/* Tooltip */}
             <span className="absolute left-full ml-2 whitespace-nowrap bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {item.name}
             </span>
           </Link>
         ))}
-
-        {/* Logout */}
+        
         <button
           onClick={handleLogout}
           className="relative group flex justify-center p-2 hover:bg-blue-200 rounded"

@@ -7,7 +7,6 @@ export default function Layout() {
       {/* NavBar lateral */}
       <NavBar />
 
-      {/* Contenido principal */}
       <main className="flex-1 overflow-auto p-4">
         <Outlet /> {/* Aquí se renderizan Dashboard, Control, etc. */}
       </main>

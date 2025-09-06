@@ -21,7 +21,6 @@ export default function Table_Light() {
       .catch((err) => console.error("Error cargando datos:", err));
   }, []);
 
-  // Aplicar filtro por fecha si se selecciona
   const eventosFiltrados = fechaFiltro
     ? eventos.filter((e) => e.fechaISO === fechaFiltro)
     : eventos;

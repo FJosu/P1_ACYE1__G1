@@ -20,7 +20,6 @@ export default function Table_Entry() {
       .catch((err) => console.error("Error cargando datos:", err));
   }, []);
 
-  // Filtrar si hay fecha seleccionada
   const eventosFiltrados = fechaFiltro
     ? eventos.filter((e) => e.fechaISO === fechaFiltro)
     : eventos;

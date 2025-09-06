@@ -20,7 +20,6 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4 relative overflow-hidden">
 
-      {/* Grid overlay */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
 
       <motion.div
@@ -38,7 +37,7 @@ export default function Login() {
             <h1 className="text-3xl font-bold text-white mb-2">Smart Home</h1>
           </div>
 
-          {/* Form */}
+          {/* Formulario */}
           <motion.form
             onSubmit={handleSubmit}
             initial={{ opacity: 0 }}
@@ -61,7 +60,7 @@ export default function Login() {
               />
             </div>
 
-            {/* Password */}
+            {/* Contraseña */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-gray-400" />

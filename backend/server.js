@@ -173,6 +173,16 @@ app.post("/api/bomba", (req, res) => {
   });
 });
 
+// Alarma
+app.post("/api/alarma", (req, res) => {
+  const { action } = req.body; // "on" | "off"
+  mqttClient.publish("/alarma", action, () => {
+    console.log("📤 Alarma:", action);
+    res.json({ ok: true, sent: action });
+  });
+});
+
+
 // ==================== RUN SERVER ====================
 const PORT = 4000;
 app.listen(PORT, () => console.log(`✅ Servidor corriendo en http://localhost:${PORT}`));

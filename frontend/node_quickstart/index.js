@@ -1,6 +1,5 @@
 const { MongoClient } = require("mongodb");
 
-// Replace the uri string with your connection string
 const uri = "mongodb+srv://MariAbi:papasfritas14@cluster0.pij2euq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 const client = new MongoClient(uri);
@@ -10,7 +9,6 @@ async function run() {
     const database = client.db('Arqui1');
     const movies = database.collection('Alarmas');
 
-    // Queries for a movie that has a title value of 'Back to the Future'
     const query = { evento: "ALARM_ON" };
     const movie = await movies.findOne(query);
 

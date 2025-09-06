@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 export default function Table_Vent() {
   const [data, setData] = useState([]);
-  const [fechaFiltro, setFechaFiltro] = useState(""); // Nuevo estado para la fecha
+  const [fechaFiltro, setFechaFiltro] = useState(""); 
 
   useEffect(() => {
     fetch("http://localhost:4000/api/ventilacion")
@@ -10,7 +10,7 @@ export default function Table_Vent() {
       .then((datos) => {
         const formateados = datos.map(d => ({
           fecha: new Date(d.ts).toLocaleDateString(),
-          fechaISO: d.ts.split("T")[0], // formato YYYY-MM-DD para filtro
+          fechaISO: d.ts.split("T")[0],
           hora: new Date(d.ts).toLocaleTimeString(),
           evento: d.evento || "N/A",
           motivo: d.motivo || "N/A",
@@ -21,7 +21,7 @@ export default function Table_Vent() {
       .catch((err) => console.error("Error cargando datos:", err));
   }, []);
 
-  // Filtramos eventos según la fecha seleccionada
+
   const eventosFiltrados = fechaFiltro
     ? data.filter((e) => e.fechaISO === fechaFiltro)
     : data;
@@ -29,7 +29,7 @@ export default function Table_Vent() {
   return (
     <div className="bg-white p-4 rounded-2xl shadow mt-6 overflow-x-auto">
       <h2 className="text-xl font-bold mb-3">Tabla de registros de Ventilación</h2>
-      {/* Input de filtro por fecha */}
+      {/*filtro por fecha */}
       <div className="mb-4">
         <label className="mr-2 font-medium">Filtrar por fecha:</label>
         <input
